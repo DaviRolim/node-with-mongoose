@@ -10,7 +10,7 @@ exports.getProducts = async (req, res, next) => {
       path: '/products'
     });
   } catch (error) {
-    
+    console.log(error);
   }
 };
 
@@ -80,11 +80,11 @@ exports.postCartDeleteProduct = async (req, res, next) => {
 };
 
 exports.getOrders = async (req, res, next) => {
-  const orders =  await Order.find({ 'user.userId': req.user._id })
+  const orders =  await Order.find({ 'user.userId': req.session.user._id })
   res.render('shop/orders', {
     path: '/orders',
     pageTitle: 'Your Orders',
-    orders
+    order
   });
 };
 
@@ -95,8 +95,8 @@ exports.postOrder = async (req, res, next) => {
   })
   const order = new Order({
     user: {
-      name: req.user.name,
-      userId: req.user //mongoose get only the id from the user Object... so smart!
+      email: req.user.email,
+      userId: req.session.user //mongoose get only the id from the user Object... so smart!
     },
     products
   })

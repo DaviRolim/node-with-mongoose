@@ -15,7 +15,7 @@ exports.postAddProduct = async (req, res, next) => {
     const imageUrl = req.body.imageUrl;
     const price = req.body.price;
     const description = req.body.description;
-    const userId = req.user._id
+    const userId = req.session.user._id
     const product = new Product({title, price, description, imageUrl, userId})
     await product.save()
     res.redirect('/admin/products');
@@ -39,7 +39,7 @@ exports.getEditProduct = async (req, res, next) => {
       pageTitle: 'Edit Product',
       path: '/admin/edit-product',
       editing: editMode,
-      product: product
+      product
     });
   } catch (error) {
     console.log(error);
@@ -82,6 +82,6 @@ exports.getProducts = async (req, res, next) => {
 
 exports.postDeleteProduct =  async (req, res, next) => {
   const prodId = req.body.productId;
-  await Product.findByIdAndRemove(prodId);
+  await Product.findByIdAndDelete(prodId);
   res.redirect('/admin/products');
 };
