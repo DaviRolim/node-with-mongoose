@@ -3,6 +3,7 @@ const crypto = require('crypto')
 const bcrypt = require('bcryptjs')
 const nodemailer = require('nodemailer');
 const sendGridTransport = require('nodemailer-sendgrid-transport');
+const { validationResult } = require('express-validator/check');
 
 const User = require('../models/user')
 
@@ -29,6 +30,14 @@ exports.getLogin = (req, res, next) => {
 exports.postLogin = async (req, res, next) => {
   const email = req.body.email
   const password = req.body.password
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(422).render('auth/login', {
+      path: '/login',
+      pageTitle: 'Login',
+      errorMessage: errors.array()[0].msg
+    })
+  }
   const user = await User.findOne({email})
   if (!user) {
     req.flash('error', 'Invalid email or password')
@@ -69,23 +78,27 @@ exports.postSignup = async (req, res, next) => {
   const email = req.body.email
   const password = req.body.password
   const confirmPassword = req.body.confirmPassword
-  const userExists = await User.findOne({email})
-  if(!userExists) {
-    const hashedPassword = await bcrypt.hash(password, 12)
-    const user = new User( {email, password: hashedPassword, cart: { items:[] } } )
-    await user.save()
-    res.redirect('/login')
-    return transporter.sendMail({
-      to: email,
-      from: 'shop@node-complete.com',
-      subject: 'Signup succeded',
-      html: '<h1>You successfully signed up!</h1>'
-    }).catch(err => {
-      console.log(err)
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(422).render('auth/signup', {
+      path: '/signup',
+      pageTitle: 'Signup',
+      errorMessage: errors.array()[0].msg
     })
   }
-  req.flash('error', 'Email already exists')
-  return res.redirect('/signup')
+  const hashedPassword = await bcrypt.hash(password, 12)
+  const user = new User( {email, password: hashedPassword, cart: { items:[] } } )
+  await user.save()
+  res.redirect('/login')
+  return transporter.sendMail({
+    to: email,
+    from: 'shop@node-complete.com',
+    subject: 'Signup succeded',
+    html: '<h1>You successfully signed up!</h1>'
+  }).catch(err => {
+    console.log(err)
+    return res.redirect('/signup')
+  })
 }
 
 exports.getReset = (req, res, next) => {
