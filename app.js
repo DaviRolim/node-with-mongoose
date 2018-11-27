@@ -66,6 +66,11 @@ app.use(authRoutes);
 
 app.use(errorController.get404);
 
+app.use((error, req, res, next) => {
+    console.log(error);
+    res.status(500).send('An error ocurred, sorry for any incovenience')
+})
+
 try {
     mongoose.connect(MONGODB_URI,{ useNewUrlParser: true })
     app.listen(PORT, () => {
