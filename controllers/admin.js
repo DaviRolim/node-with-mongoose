@@ -13,9 +13,21 @@ exports.getAddProduct = (req, res, next) => {
 exports.postAddProduct = async (req, res, next) => {
   try {
     const title = req.body.title
-    const imageUrl = req.body.imageUrl
+    const image = req.file
     const price = req.body.price
     const description = req.body.description
+    if (!image) {
+      return res.status(422).render('admin/edit-product', {
+        pageTitle: 'Add Product',
+        path: '/admin/add-product',
+        editing: false,
+        product: {
+          title,
+          price,
+          description
+        }
+      })
+    }
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       return res.status(422).render('admin/edit-product', {
@@ -24,13 +36,13 @@ exports.postAddProduct = async (req, res, next) => {
         editing: false,
         product: {
           title,
-          imageUrl,
           price,
           description
         }
       })
     }
     const userId = req.session.user._id
+    const imageUrl = image.path;
     const product = new Product({title, price, description, imageUrl, userId})
     await product.save()
     res.redirect('/admin/products')
@@ -65,7 +77,7 @@ exports.postEditProduct = async (req, res, next) => {
   const prodId = req.body.productId
   const updatedTitle = req.body.title
   const updatedPrice = req.body.price
-  const updatedImageUrl = req.body.imageUrl
+  const image = req.file
   const updatedDesc = req.body.description
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -75,7 +87,6 @@ exports.postEditProduct = async (req, res, next) => {
       editing: false,
       product: {
         title: updatedTitle,
-        imageUrl: updatedImageUrl,
         price: updatedPrice,
         description: updatedDesc
       }
@@ -88,7 +99,9 @@ exports.postEditProduct = async (req, res, next) => {
     }
     product.title = updatedTitle
     product.price = updatedPrice
-    product.imageUrl = updatedImageUrl
+    if (image) {
+      product.imageUrl = image.path
+    }
     product.description = updatedDesc
     await product.save()
     res.redirect('/admin/products')
